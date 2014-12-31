@@ -7,11 +7,11 @@ require "houston/reports/version"
 Gem::Specification.new do |s|
   s.name        = "houston-reports"
   s.version     = Houston::Reports::VERSION
-  s.authors     = ["TODO: Your name"]
-  s.email       = ["TODO: Your email"]
-  s.homepage    = "TODO"
-  s.summary     = "TODO: Summary of Houston Reports."
-  s.description = "TODO: Description of Houston Reports."
+  s.authors     = ["Bob Lail"]
+  s.email       = ["bob.lail@cph.org"]
+  s.homepage    = "https://github.com/concordia-publishing-house/houston-reports"
+  s.summary     = "Email Reports from Houston"
+  s.description = "Email Reports from Houston"
 
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["test/**/*"]
