@@ -1,4 +1,4 @@
 module Houston::Reports
-  class ApplicationController < ActionController::Base
+  class ApplicationController < ::ApplicationController
   end
 end
