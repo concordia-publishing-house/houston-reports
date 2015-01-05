@@ -38,7 +38,7 @@
     </div>
   <% end %>
   <% s.percent "closed on-time<br/>(this week)".html_safe, @report.alerts_rate * 100, :class => @report.alerts_week_status %>
-  <% s.percent "closed on-time<br/>(last 10 weeks)".html_safe, @report.alerts_rate_average * 100, :class => @report.alerts_average_status %>
+  <% s.percent "closed on-time<br/>(since Jan 1)".html_safe, @report.alerts_rate_average * 100, :class => @report.alerts_average_status %>
   <% s.score "alerts closed<br/>(this week)".html_safe, @report.alerts_closed, precision: 0 %>
 <% end %>
 
@@ -65,6 +65,6 @@
     </div>
   <% end %>
   <% s.percent "of time charged<br/>(this week)".html_safe, @report.productivity_rate * 100, :class => @report.productivity_week_status %>
-  <% s.percent "of time charged<br/>(last 10 weeks)".html_safe, @report.productivity_rate_average * 100, :class => @report.productivity_average_status %>
+  <% s.percent "of time charged<br/>(since Jan 1)".html_safe, @report.productivity_rate_average * 100, :class => @report.productivity_average_status %>
   <% s.score "spent on alerts<br/>(this week)".html_safe, @report.hours_charged_to_alerts, unit: "h", precision: 1 %>
 <% end %>

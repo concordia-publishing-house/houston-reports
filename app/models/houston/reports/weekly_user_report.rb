@@ -73,7 +73,7 @@ module Houston::Reports
       @alerts_rate_target = 0.8
       
       @alerts_rate_average = Measurement.named("weekly.alerts.completed.on-time.percent")
-        .taken_before(@date).limit(10).mean
+        .taken_before(@date).taken_after(january1).mean
       @alerts_rate_average ||= 0
       
       @alerts_week_status = @alerts_closed.zero? ? "no-data" : @alerts_rate >= @alerts_rate_target ? "success" : "failure"
@@ -94,11 +94,15 @@ module Houston::Reports
       @productivity_rate_target = 0.75 if has_productivity_goal?
       @productivity_rate_average = Measurement.for(@user)
         .named("weekly.hours.charged.percent")
-        .taken_before(@date).limit(10).mean
+        .taken_before(@date).taken_after(january1).mean
       @productivity_rate_average ||= 0
       
       @productivity_week_status = @productivity_rate_target.nil? || hours_worked.zero? ? "no-data" : @productivity_rate >= @productivity_rate_target ? "success" : "failure"
       @productivity_average_status = @productivity_rate_target.nil? || hours_worked.zero? ? "no-data" : @productivity_rate_average >= @productivity_rate_target ? "success" : "failure"
+    end
+    
+    def january1
+      Date.new(date.year, 1, 1)
     end
     
   end
