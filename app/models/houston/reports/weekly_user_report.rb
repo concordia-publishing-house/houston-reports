@@ -15,6 +15,10 @@ module Houston::Reports
       @user_measurements ||= measurements.for(user)
     end
     
+    def team_measurements
+      @team_measurements ||= measurements.global
+    end
+    
     
     def has_productivity_goal?
       user.id != 1 # Bob doesn't
@@ -66,14 +70,12 @@ module Houston::Reports
     end
     
     def calculate_alerts_values!
-      @alerts_closed = measurements.named("weekly.alerts.completed").total
-      alerts_closed_on_time = measurements.named("weekly.alerts.completed.on-time").total
-      @alerts_rate = alerts_closed_on_time / @alerts_closed unless @alerts_closed.zero?
-      @alerts_rate ||= 0
+      @alerts_closed = (team_measurements.named("weekly.alerts.completed").value || 0).to_d
+      @alerts_rate = (team_measurements.named("weekly.alerts.due.completed-on-time.percent").value || 0).to_d
       @alerts_rate_target = 0.8
       
-      @alerts_rate_average = Measurement.named("weekly.alerts.completed.on-time.percent")
-        .taken_before(@date).taken_after(january1).mean
+      @alerts_rate_average = Measurement.global.named("weekly.alerts.due.completed-on-time.percent")
+        .taken_between(january1, @date).mean
       @alerts_rate_average ||= 0
       
       @alerts_week_status = @alerts_closed.zero? ? "no-data" : @alerts_rate >= @alerts_rate_target ? "success" : "failure"
@@ -94,7 +96,8 @@ module Houston::Reports
       @productivity_rate_target = 0.75 if has_productivity_goal?
       @productivity_rate_average = Measurement.for(@user)
         .named("weekly.hours.charged.percent")
-        .taken_before(@date).taken_after(january1).mean
+        .taken_between(january1, @date)
+        .mean
       @productivity_rate_average ||= 0
       
       @productivity_week_status = @productivity_rate_target.nil? || hours_worked.zero? ? "no-data" : @productivity_rate >= @productivity_rate_target ? "success" : "failure"

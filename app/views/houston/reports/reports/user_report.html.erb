@@ -68,3 +68,15 @@
   <% s.percent "of time charged<br/>(since Jan 1)".html_safe, @report.productivity_rate_average * 100, :class => @report.productivity_average_status %>
   <% s.score "spent on alerts<br/>(this week)".html_safe, @report.hours_charged_to_alerts, unit: "h", precision: 1 %>
 <% end %>
+
+<div class="report-details">
+  <h6>Team measurements</h6>
+  <pre><%= @report.team_measurements.map { |m|
+    [ m.name.ljust(50),
+      m.value.rjust(8) ].join(" ") }.join("\n") %></pre>
+  
+  <h6>My measurements</h6>
+  <pre><%= @report.user_measurements.map { |m|
+    [ m.name.ljust(50),
+      m.value.rjust(8) ].join(" ") }.join("\n") %></pre>
+</div>

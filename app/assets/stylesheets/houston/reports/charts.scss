@@ -66,3 +66,14 @@ text.heading { fill: #6D7577; }
 //  path.tick { stroke: #72CB60; }
 //  path.tick { stroke: transparent; }
 }
+
+.report-details { margin: 5em 0; }
+.report-details h6 {
+  text-align: left;
+  white-space: pre;
+  font-family: monospace;
+  font-size: inherit;
+  font-weight: normal;
+  text-decoration: underline;
+  margin: 1em 0 0 60px; // not sure why the 60px...
+}
