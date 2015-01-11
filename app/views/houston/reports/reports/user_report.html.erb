@@ -71,12 +71,12 @@
 
 <div class="report-details">
   <h6>Team measurements</h6>
-  <pre><%= @report.team_measurements.map { |m|
+  <pre><%= @report.team_measurements.reorder(:name).map { |m|
     [ m.name.ljust(50),
       m.value.rjust(8) ].join(" ") }.join("\n") %></pre>
   
   <h6>My measurements</h6>
-  <pre><%= @report.user_measurements.map { |m|
+  <pre><%= @report.user_measurements.reorder(:name).map { |m|
     [ m.name.ljust(50),
       m.value.rjust(8) ].join(" ") }.join("\n") %></pre>
 </div>
