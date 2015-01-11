@@ -2,6 +2,8 @@ module Houston::Reports
   class ReportsController < ApplicationController
     layout "email"
     
+    helper Houston::Reports::ApplicationHelper
+    
     helper_method :stylesheets
     class_attribute :stylesheets
     self.stylesheets = %w{
