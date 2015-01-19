@@ -1,0 +1,43 @@
+<style type="text/css">
+  thead th { text-align: center; }
+  tbody th { text-align: right; }
+  td { text-align: right; }
+  td, th { padding: 0.5em 1em; }
+  td span { display: block; }
+  td span.empty { color: #333; }
+</style>
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <% @date_range.each do |date|; next if date.wday == 0 or date.wday == 6 %>
+        <th><%= date.strftime("%-m/%-d") %></th>
+      <% end %>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @measurements.group_by(&:subject).each do |user, measurements| %>
+      <tr>
+        <th><%= user.name.split(/ /).join("<br/>").html_safe %></th>
+        <% @date_range.each do |date|; next if date.wday == 0 or date.wday == 6 %>
+          <% charged = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.charged" }.try(:value).to_s.to_d %>
+          <% worked = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.worked" }.try(:value).to_s.to_d %>
+          <% off = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.off" }.try(:value).to_s.to_d %>
+          <% recorded = worked + off %>
+          <td>
+            <span class="value <%= "empty" if charged.zero? %>"><%= "%.1f" % charged %></span>
+            <span class="value <%= "empty" if worked.zero? %>"><%= "%.1f" % worked %></span>
+            <span class="value <%= "empty" if off.zero? %>"><%= "%.1f" % off %></span>
+          </td>
+        <% end %>
+        <td style="text-align: left;">
+          <span>Charged</span>
+          <span>Worked</span>
+          <span>Off</span>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

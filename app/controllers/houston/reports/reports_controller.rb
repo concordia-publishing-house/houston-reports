@@ -20,5 +20,14 @@ module Houston::Reports
       @report = WeeklyUserReport.new(user, date)
     end
     
+    def star
+      @date_range = (Date.today - 14)..Date.today
+      @measurements = Measurement \
+        .named("daily.hours.{charged,worked,off}")
+        .taken_on(@date_range)
+        .includes(:subject)
+      render layout: "dashboard"
+    end
+    
   end
 end
