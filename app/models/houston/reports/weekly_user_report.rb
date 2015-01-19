@@ -74,9 +74,9 @@ module Houston::Reports
       @alerts_rate = (team_measurements.named("weekly.alerts.due.completed-on-time.percent").value || 0).to_d
       @alerts_rate_target = 0.8
       
-      total_alerts_due = Measurement.global.named("weekly.alerts.due").taken_between(january1, @date).total
+      total_alerts_due = Measurement.global.named("weekly.alerts.due").taken_between(january1, date).total
       total_alerts_on_time = Measurement.global.named("weekly.alerts.due.completed-on-time")
-        .taken_between(january1, @date).total
+        .taken_between(january1, date).total
       @alerts_rate_average = total_alerts_due.zero? ? 0 : (total_alerts_on_time.to_f  / total_alerts_due)
       
       @alerts_week_status = @alerts_closed.zero? ? "no-data" : @alerts_rate >= @alerts_rate_target ? "success" : "failure"
@@ -95,8 +95,8 @@ module Houston::Reports
       @productivity_alerts_rate ||= 0
       @productivity_rate_target = 0.75 if has_productivity_goal?
       
-      total_hours_worked = Measurement.for(@user).named("weekly.hours.worked").taken_between(january1, @date).total
-      total_hours_charged = Measurement.for(@user).named("weekly.hours.charged").taken_between(january1, @date).total
+      total_hours_worked = Measurement.for(@user).named("weekly.hours.worked").taken_between(january1, date).total
+      total_hours_charged = Measurement.for(@user).named("weekly.hours.charged").taken_between(january1, date).total
       @productivity_rate_average = total_hours_worked.zero? ? 0 : (total_hours_charged.to_f  / total_hours_worked)
       
       @productivity_week_status = @productivity_rate_target.nil? || hours_worked.zero? ? "no-data" : @productivity_rate >= @productivity_rate_target ? "success" : "failure"
