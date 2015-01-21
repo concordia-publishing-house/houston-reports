@@ -8,11 +8,11 @@ module Houston::Reports
     def weekly_user_report(report, options={})
       @report = report
       
-      mail({
+      mail(options.pick(:cc, :bcc).merge({
         to:       options.fetch(:to, report.user),
         subject:  "#{report.username} ⭑ #{report.date.strftime("%b %-d, %Y")}",
         template: "houston/reports/reports/user_report"
-      })
+      }))
     end
     
     
