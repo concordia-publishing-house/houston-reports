@@ -21,12 +21,13 @@ module Houston::Reports
     end
     
     def star
+      template = params[:numbers] == "true" ? "houston/reports/reports/star_numbers" : "houston/reports/reports/star"
       @date_range = (Date.today - 14)..Date.today
       @measurements = Measurement \
         .named("daily.hours.{charged,worked,off}")
         .taken_on(@date_range)
         .includes(:subject)
-      render layout: "dashboard"
+      render template: template, layout: "dashboard"
     end
     
   end

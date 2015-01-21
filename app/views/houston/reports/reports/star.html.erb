@@ -1,10 +1,25 @@
 <style type="text/css">
-  thead th { text-align: center; }
-  tbody th { text-align: right; }
+  thead th { text-align: center; line-height: 1em; font-weight: 500; }
+  tbody th { text-align: right; line-height: 1em; font-weight: 500; }
   td { text-align: right; }
-  td, th { padding: 0.5em 1em; }
+  td, th { padding: 0.5em 1em; color: #555; }
   td span { display: block; }
-  td span.empty { color: #333; }
+  th span { display: block; }
+  span.weekday { font-size: 0.85em; font-weight: bold; color: #3d3d3d; }
+  tbody td { font-size: 0.85em; color: #3d3d3d; }
+  
+  b { 
+    font-size: 12px;
+    width: 1em;
+    height: 1em;
+    border-radius: 1em;
+    background: #252525;
+    display: block;
+    margin: 0.5em;
+  }
+  b.empower.recorded { background: rgb(52, 134, 134); }
+  b.star.recorded { background: rgb(50, 163, 38); }
+  b.star.partially-recorded { background: rgb(184, 184, 19); }
 </style>
 
 <table>
@@ -12,7 +27,10 @@
     <tr>
       <th></th>
       <% @date_range.each do |date|; next if date.wday == 0 or date.wday == 6 %>
-        <th><%= date.strftime("%-m/%-d") %></th>
+        <th>
+          <span class="weekday"><%= date.strftime("%a") %></span>
+          <span class="date"><%= date.strftime("%-m/%-d") %></span>
+        </th>
       <% end %>
       <th></th>
     </tr>
@@ -22,20 +40,23 @@
       <tr>
         <th><%= user.name.split(/ /).join("<br/>").html_safe %></th>
         <% @date_range.each do |date|; next if date.wday == 0 or date.wday == 6 %>
-          <% charged = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.charged" }.try(:value).to_s.to_d %>
-          <% worked = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.worked" }.try(:value).to_s.to_d %>
-          <% off = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.off" }.try(:value).to_s.to_d %>
-          <% recorded = worked + off %>
+          <% charged = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.charged" }.try(:value).to_s.to_d
+             worked = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.worked" }.try(:value).to_s.to_d
+             off = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.off" }.try(:value).to_s.to_d
+             recorded = worked + off
+             star_goal = (user.id == 1 ? 0.25 : 0.5) * worked
+             empower_goal = 6.0
+             star_css = "partially-recorded" if charged > 0
+             star_css = "recorded" if recorded >= empower_goal && (charged >= star_goal)
+             empower_css = "recorded" if recorded >= empower_goal %>
           <td>
-            <span class="value <%= "empty" if charged.zero? %>"><%= "%.1f" % charged %></span>
-            <span class="value <%= "empty" if worked.zero? %>"><%= "%.1f" % worked %></span>
-            <span class="value <%= "empty" if off.zero? %>"><%= "%.1f" % off %></span>
+            <b class="star <%= star_css %>"></b>
+            <b class="empower <%= empower_css %>"></b>
           </td>
         <% end %>
         <td style="text-align: left;">
-          <span>Charged</span>
-          <span>Worked</span>
-          <span>Off</span>
+          <span>(Star)</span>
+          <span>(Empower)</span>
         </td>
       </tr>
     <% end %>
