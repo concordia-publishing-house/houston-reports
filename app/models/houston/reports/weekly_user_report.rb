@@ -8,7 +8,7 @@ module Houston::Reports
     end
     
     def username
-      SLACK_USERNAME_FOR_USER.fetch(user.email)[1..-1]
+      user.nickname
     end
     
     def user_measurements
