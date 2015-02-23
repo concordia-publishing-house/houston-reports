@@ -16,7 +16,7 @@ module Houston::Reports
     
     def user_report
       date = Date.parse(params[:date]) rescue Date.today
-      user = User.find_by_nickname params[:nickname]
+      user = User.find_by_nickname! params[:nickname]
       authorize! :edit, user
       @report = WeeklyUserReport.new(user, date)
     end
@@ -32,7 +32,7 @@ module Houston::Reports
     end
     
     def user_star_report
-      user = User.find_by_nickname params[:nickname]
+      user = User.find_by_nickname! params[:nickname]
       authorize! :edit, user
       measurements = Measurement \
         .for(user)
