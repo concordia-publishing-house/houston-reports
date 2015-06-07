@@ -3,6 +3,7 @@ module Houston::Reports
     layout "email"
     
     helper Houston::Reports::ApplicationHelper
+    helper Houston::Alerts::AlertHelper
     
     helper_method :stylesheets
     class_attribute :stylesheets
@@ -19,6 +20,41 @@ module Houston::Reports
       user = User.find_by_nickname! params[:nickname]
       authorize! :edit, user
       @report = WeeklyUserReport.new(user, date)
+    end
+    
+    def weekly_report
+      date = Date.parse(params[:date]) rescue 1.day.ago
+      @report = WeeklyGoalReport.new(date)
+      
+      @sprint = Sprint.find_by_date!(date)
+      @checked_out_by ||= Hash[SprintTask
+        .where(sprint_id: @sprint.id, task_id: @sprint.tasks.pluck(:id))
+        .includes(:checked_out_by)
+        .map { |task| [task.task_id, task.checked_out_by] }]
+      
+      @alerts_closed_or_due = Houston::Alerts::Alert.closed_or_due_during(@sprint)
+        .includes(:project, :checked_out_by)
+      
+      @alerts_opened_closed = ActiveRecord::Base.connection.select_all <<-SQL
+        SELECT
+          "days"."day",
+          "alerts_opened"."count" "alerts_opened",
+          "alerts_closed"."count" "alerts_closed"
+        FROM generate_series('#{2.days.before(@sprint.start_date)}'::date, '#{@sprint.end_date}'::date, '1 day') AS days(day)
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*) FROM alerts
+          WHERE opened_at::date = days.day
+          AND destroyed_at IS NULL
+        ) "alerts_opened" ON true
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*) FROM alerts
+          WHERE closed_at::date = days.day
+          AND destroyed_at IS NULL
+        ) "alerts_closed" ON true
+        ORDER BY days.day ASC
+      SQL
+      
+      render layout: "houston/reports/minimal"
     end
     
     def star
