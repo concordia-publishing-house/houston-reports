@@ -22,13 +22,15 @@ module Houston::Reports
     end
     
     def star
-      template = params[:numbers] == "true" ? "houston/reports/reports/star_numbers" : "houston/reports/reports/star"
-      @date_range = (Date.today - 14)..Date.today
+      date = Date.parse(params[:date]) rescue Date.today
+      @report = WeeklyGoalReport.new(date)
+
+      @date_range = (date - 14)..date
       @measurements = Measurement \
         .named("daily.hours.{charged,worked,off}")
         .taken_on(@date_range)
         .includes(:subject)
-      render template: template, layout: "dashboard"
+      render layout: request.xhr? ? false : "houston/reports/dashboard"
     end
     
     def sprint

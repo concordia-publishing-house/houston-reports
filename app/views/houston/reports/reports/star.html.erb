@@ -1,64 +1,91 @@
-<style type="text/css">
-  thead th { text-align: center; line-height: 1em; font-weight: 500; }
-  tbody th { text-align: right; line-height: 1em; font-weight: 500; }
-  td { text-align: right; }
-  td, th { padding: 0.5em 1em; color: #555; }
-  td span { display: block; }
-  th span { display: block; }
-  span.weekday { font-size: 0.85em; font-weight: bold; color: #3d3d3d; }
-  tbody td { font-size: 0.85em; color: #3d3d3d; }
+<% unless request.xhr? %>
+<% content_for :stylesheets do %>
+  <style type="text/css">
+    thead th { text-align: center; line-height: 1em; font-weight: 500; padding-bottom: 0.5em; vertical-align: bottom; }
+    tbody th { text-align: right; line-height: 1em; font-weight: 500; }
+    td { text-align: right; }
+    td, th { padding: 0.25em 0.75em; color: #555; }
+    td span { display: block; }
+    th span { display: block; }
+    span.weekday { font-size: 0.85em; font-weight: bold; color: #3d3d3d; }
+    tbody td { font-size: 0.85em; color: #3d3d3d; }
   
-  b { 
-    font-size: 12px;
-    width: 1em;
-    height: 1em;
-    border-radius: 1em;
-    background: #252525;
-    display: block;
-    margin: 0.5em;
-  }
-  b.empower.recorded { background: rgb(52, 134, 134); }
-  b.star.recorded { background: rgb(50, 163, 38); }
-  b.star.partially-recorded { background: rgb(184, 184, 19); }
-</style>
+    b { 
+      font-size: 11px;
+      width: 1em;
+      height: 1em;
+      border-radius: 1em;
+      display: block;
+      margin: 0.5em auto;
+    }
+    b { background: #da6427; } /* not recorded */
+    b.recorded { background: #1b1b1b; }
+    b.partially-recorded { background: rgb(178, 164, 33); }
+  </style>
+<% end %>
 
-<table>
-  <thead>
-    <tr>
-      <th></th>
-      <% @date_range.each do |date|; next if date.wday == 0 or date.wday == 6 %>
-        <th>
-          <span class="weekday"><%= date.strftime("%a") %></span>
-          <span class="date"><%= date.strftime("%-m/%-d") %></span>
-        </th>
-      <% end %>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @measurements.group_by(&:subject).each do |user, measurements| %>
+<h1>Time</h1>
+
+<div id="reports_dashboard_body">
+<% end %>
+
+  <table id="reports_dashboard_team">
+    <thead>
       <tr>
-        <th><%= user.name.split(/ /).join("<br/>").html_safe %></th>
+        <th></th>
         <% @date_range.each do |date|; next if date.wday == 0 or date.wday == 6 %>
-          <% charged = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.charged" }.try(:value).to_s.to_d
-             worked = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.worked" }.try(:value).to_s.to_d
-             off = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.off" }.try(:value).to_s.to_d
-             recorded = worked + off
-             star_goal = (user.id == 1 ? 0.25 : 0.5) * worked
-             empower_goal = 6.0
-             star_css = "partially-recorded" if charged > 0
-             star_css = "recorded" if recorded >= empower_goal && (charged >= star_goal)
-             empower_css = "recorded" if recorded >= empower_goal %>
-          <td>
-            <b class="star <%= star_css %>"></b>
-            <b class="empower <%= empower_css %>"></b>
-          </td>
+          <th>
+            <span class="weekday"><%= date.strftime("%a") %></span>
+            <span class="date"><%= date.strftime("%-m/%-d") %></span>
+          </th>
         <% end %>
-        <td style="text-align: left;">
-          <span>(Star)</span>
-          <span>(Empower)</span>
-        </td>
+        <th></th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <% @measurements.group_by(&:subject).each do |user, measurements| %>
+        <% next if user.nil? %>
+        <tr>
+          <th><%= avatar_for(user, size: 28) %></th>
+          <% @date_range.each do |date|; next if date.wday == 0 or date.wday == 6 %>
+            <% charged = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.charged" }.try(:value).to_s.to_d
+               worked = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.worked" }.try(:value).to_s.to_d
+               off = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.off" }.try(:value).to_s.to_d
+               recorded = worked + off
+               star_goal = (user.id == 1 ? 0.25 : 0.5) * worked
+               empower_goal = 6.0
+               star_css = "partially-recorded" if charged > 0
+               star_css = "recorded" if recorded >= empower_goal && (charged >= star_goal)
+               empower_css = "recorded" if recorded >= empower_goal %>
+            <td>
+              <b class="star <%= star_css %>"></b>
+              <b class="empower <%= empower_css %>"></b>
+            </td>
+          <% end %>
+          <td style="text-align: left">
+            <span>Star</span>
+            <span>Empower</span>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+<% unless request.xhr? %>
+</div>
+
+<% content_for :javascripts do %>
+  <script type="text/javascript">
+    $(function() {
+      new Refresher()
+        .container('#container')
+        .interval(30 * 60 * 1000) // 30 minutes
+        .callback(function() {
+          $.get(window.location.path, function(html) {
+            $('#reports_dashboard_body').html(html);
+          });
+        }).render();
+    });
+  </script>
+<% end %>
+<% end %>

@@ -1,6 +1,6 @@
 Houston::Reports::Engine.routes.draw do
-  
-  get "star", to: "reports#star"
+
+  get "star/dashboard", to: "reports#star"
 
   get "sprint/dashboard", to: "reports#sprint"
   get "sprint/:id/dashboard", to: "reports#sprint"
