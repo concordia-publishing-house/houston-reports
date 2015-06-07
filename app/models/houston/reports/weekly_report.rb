@@ -34,5 +34,9 @@ module Houston::Reports
       date - days_since_thursday
     end
     
+    def january1
+      Date.new(date.year, 1, 1)
+    end
+    
   end
 end
