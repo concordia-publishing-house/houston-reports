@@ -1,7 +1,7 @@
 <%= cool_avatar @report.user, size: 318 %>
 
-<h1><%= @report.username %></h1>
-<h2><%= @report.date.strftime("%b %-d, %Y") %></h2>
+<h1 class="reports-user-nickname"><%= @report.username %></h1>
+<h2 class="reports-user-date"><%= @report.date.strftime("%b %-d, %Y") %></h2>
 <% r = 30; height = r * 2 + 8; width = height + 24; translate = "translate(#{r + 4 + 24}, #{r + 4})" %>
 
 
