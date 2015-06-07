@@ -8,8 +8,8 @@ module Houston::Reports
     class_attribute :stylesheets
     self.stylesheets = %w{
       core/colors.scss.erb
+      core/scores.scss
       application/emoji.scss
-      application/scores.scss
     }
     
     self.stylesheets = stylesheets + %w{houston/reports/charts.scss}
