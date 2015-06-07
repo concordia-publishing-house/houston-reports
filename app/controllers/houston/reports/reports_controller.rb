@@ -31,6 +31,25 @@ module Houston::Reports
       render template: template, layout: "dashboard"
     end
     
+    def sprint
+      @title = "Sprint"
+      @sprint = Sprint.find_by_id(params[:id]) || Sprint.current || Sprint.create!
+      
+      @report = WeeklyGoalReport.new(@sprint.start_date)
+      
+      respond_to do |format|
+        format.json do
+          render json: {
+            start: @sprint.start_date,
+            tasks: SprintTaskPresenter.new(@sprint).as_json,
+            sprintGoalHtml: render_to_string(partial: "sprint_goal", formats: [:html]) }
+        end
+        format.html do
+          render layout: "houston/reports/dashboard"
+        end
+      end
+    end
+    
     def user_star_report
       user = User.find_by_nickname! params[:nickname]
       authorize! :edit, user

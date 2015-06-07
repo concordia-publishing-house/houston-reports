@@ -82,3 +82,25 @@ text.heading { fill: #6D7577; }
   text-align: left;
   margin: 1em 0 0 60px;
 }
+
+
+#sprint_view {
+  height: 260px;
+}
+
+#sprint_goal_view {
+  text-align: right;
+  margin: 3em 2em;
+
+  // hack
+  .score.score-giant p {
+    min-width: 7em;
+    vertical-align: bottom;
+  }
+}
+
+.dashboard.green {
+  .score-count {
+    color: #7ab84a; // $vivid-green
+  }
+}
