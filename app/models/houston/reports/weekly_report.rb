@@ -12,7 +12,7 @@ module Houston::Reports
     end
     
     def quarter_name
-      @quarter_name ||= {1 => "Q1", 4 => "Q2", 7 => "Q3", 10 => "Q4"}.fetch(date.beginning_of_quarter.month)
+      @quarter_name ||= {1 => "Q1", 4 => "Q2", 7 => "Q3", 10 => "Q4"}.fetch(quarter[0].month)
     end
     
     def quarter
