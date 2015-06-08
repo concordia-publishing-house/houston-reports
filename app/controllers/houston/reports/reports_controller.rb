@@ -35,22 +35,37 @@ module Houston::Reports
       @alerts_closed_or_due = Houston::Alerts::Alert.closed_or_due_during(@sprint)
         .includes(:project, :checked_out_by)
       
+      
+      # @alerts_opened_closed = ActiveRecord::Base.connection.select_all <<-SQL
+      #   SELECT
+      #     "days"."day",
+      #     "alerts_opened"."count" "alerts_opened",
+      #     "alerts_closed"."count" "alerts_closed"
+      #   FROM generate_series('#{2.days.before(@sprint.start_date)}'::date, '#{@sprint.end_date}'::date, '1 day') AS days(day)
+      #   LEFT JOIN LATERAL (
+      #     SELECT COUNT(*) FROM alerts
+      #     WHERE opened_at::date = days.day
+      #     AND destroyed_at IS NULL
+      #   ) "alerts_opened" ON true
+      #   LEFT JOIN LATERAL (
+      #     SELECT COUNT(*) FROM alerts
+      #     WHERE closed_at::date = days.day
+      #     AND destroyed_at IS NULL
+      #   ) "alerts_closed" ON true
+      #   ORDER BY days.day ASC
+      # SQL
       @alerts_opened_closed = ActiveRecord::Base.connection.select_all <<-SQL
         SELECT
           "days"."day",
-          "alerts_opened"."count" "alerts_opened",
-          "alerts_closed"."count" "alerts_closed"
+          ( SELECT COUNT(*) FROM alerts
+            WHERE opened_at::date = days.day
+            AND destroyed_at IS NULL
+          ) "alerts_opened",
+          ( SELECT COUNT(*) FROM alerts
+            WHERE closed_at::date = days.day
+            AND destroyed_at IS NULL
+          ) "alerts_closed"
         FROM generate_series('#{2.days.before(@sprint.start_date)}'::date, '#{@sprint.end_date}'::date, '1 day') AS days(day)
-        LEFT JOIN LATERAL (
-          SELECT COUNT(*) FROM alerts
-          WHERE opened_at::date = days.day
-          AND destroyed_at IS NULL
-        ) "alerts_opened" ON true
-        LEFT JOIN LATERAL (
-          SELECT COUNT(*) FROM alerts
-          WHERE closed_at::date = days.day
-          AND destroyed_at IS NULL
-        ) "alerts_closed" ON true
         ORDER BY days.day ASC
       SQL
       
