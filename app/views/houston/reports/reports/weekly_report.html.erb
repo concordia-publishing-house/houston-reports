@@ -29,8 +29,8 @@
   <b class="count"><%= @alerts_closed_or_due.count %></b>
   
   <%= score_card :large do |s| %>
-    <% s.percent "closed on-time<br/>(this week)".html_safe, @report.alerts_rate * 100, :class => @report.alerts_week_status %>
-  <% end %>
+    <% s.percent "closed on-time<br/>(this week)".html_safe, @alerts_rate %>
+  <% end if @alerts_rate %>
 </h2>
 
 <table class="weekly-report-list">

@@ -24,7 +24,6 @@ module Houston::Reports
     
     def weekly_report
       date = Date.parse(params[:date]) rescue 1.day.ago
-      @report = WeeklyGoalReport.new(date)
       
       @sprint = Sprint.find_by_date!(date)
       @checked_out_by ||= Hash[SprintTask
@@ -32,7 +31,26 @@ module Houston::Reports
         .includes(:checked_out_by)
         .map { |task| [task.task_id, task.checked_out_by] }]
       
-      @alerts_closed_or_due = Houston::Alerts::Alert.closed_or_due_during(@sprint)
+      week = @sprint.to_range
+      
+      # Alerts due during this week
+      # except for those that aren't closed
+      # and still have time (i.e. due after today)
+      #
+      # so:
+      #
+      # Alerts due during this week
+      # which were either closed or past-due
+      #
+      alerts = Houston::Alerts::Alert.arel_table
+      alerts_due = Houston::Alerts::Alert.where(deadline: week)
+        .where(
+          alerts[:closed_at].not_eq(nil).or(
+          alerts[:deadline].lteq(Time.now)))
+      @alerts_rate = alerts_due.select(&:on_time?).count * 100.0 / alerts_due.count if alerts_due.any?
+      
+      week = week.begin..Time.now if week.end > Time.now
+      @alerts_closed_or_due = Houston::Alerts::Alert.closed_or_due_during(week)
         .includes(:project, :checked_out_by)
       
       
