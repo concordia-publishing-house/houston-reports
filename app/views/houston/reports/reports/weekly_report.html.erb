@@ -26,7 +26,7 @@
 
 <h2 class="light">
   Alerts
-  <b class="count"><%= @alerts_closed_or_due.count %></b>
+  <b class="count"><%= @alerts_due.count %></b>
   
   <%= score_card :large do |s| %>
     <% s.percent "closed on-time<br/>(this week)".html_safe, @alerts_rate %>
@@ -34,15 +34,28 @@
 </h2>
 
 <table class="weekly-report-list">
-  <% @alerts_closed_or_due.sort_by { |alert| alert.project ? alert.project.slug : "" }.each do |alert| %>
-    <tr class="report-alert houston-alert <%= alert.on_time? ? "success" : "failure" %>" id="alert_<%= alert.id %>">
-      <td class="houston-alert-project"><%= project_label(alert.project) %></td>
-      <td class="houston-alert-type"><%= icon_for_alert alert %></td>
-      <td class="houston-alert-summary"><%= alert.summary %></td>
-      <td class="houston-alert-user"><%= avatar_for(alert.checked_out_by, size: 26) %></td>
-      <td class="houston-alert-completed-on-time"></td>
-    </tr>
-  <% end %>
+  <tbody>
+    <% @alerts_due.sort_by { |alert| alert.project ? alert.project.slug : "" }.each do |alert| %>
+      <tr class="report-alert houston-alert <%= alert.on_time? ? "success" : "failure" %>" id="alert_<%= alert.id %>">
+        <td class="houston-alert-project"><%= project_label(alert.project) %></td>
+        <td class="houston-alert-type"><%= icon_for_alert alert %></td>
+        <td class="houston-alert-summary"><%= alert.summary %></td>
+        <td class="houston-alert-user"><%= avatar_for(alert.checked_out_by, size: 26) %></td>
+        <td class="houston-alert-completed-on-time"></td>
+      </tr>
+    <% end %>
+  </tbody>
+  <tfoot>
+    <% @alerts_closed_not_due.sort_by { |alert| alert.project ? alert.project.slug : "" }.each do |alert| %>
+      <tr class="report-alert houston-alert" id="alert_<%= alert.id %>">
+        <td class="houston-alert-project"><%= project_label(alert.project) %></td>
+        <td class="houston-alert-type"><%= icon_for_alert alert %></td>
+        <td class="houston-alert-summary"><%= alert.summary %></td>
+        <td class="houston-alert-user"><%= avatar_for(alert.checked_out_by, size: 26) %></td>
+        <td class="houston-alert-completed-on-time"></td>
+      </tr>
+    <% end %>
+  </tfoot>
 </table>
 
 

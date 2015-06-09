@@ -61,6 +61,15 @@ table.weekly-report-list {
     content: '\f00d';
     color: #e24e32; // fail
   }
+  
+  tbody > tr:last-child > td {
+    padding-bottom: 2.5em;
+  }
+  
+  tfoot > tr:first-child > td {
+    border-top: 1px solid #e4e4e4;
+    padding-top: 2.5em;
+  }
 }
 
 h2.light {

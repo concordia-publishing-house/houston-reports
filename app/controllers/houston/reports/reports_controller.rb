@@ -43,15 +43,18 @@ module Houston::Reports
       # which were either closed or past-due
       #
       alerts = Houston::Alerts::Alert.arel_table
-      alerts_due = Houston::Alerts::Alert.where(deadline: week)
+      @alerts_due = Houston::Alerts::Alert.where(deadline: week)
         .where(
           alerts[:closed_at].not_eq(nil).or(
           alerts[:deadline].lteq(Time.now)))
-      @alerts_rate = alerts_due.select(&:on_time?).count * 100.0 / alerts_due.count if alerts_due.any?
+      @alerts_rate = @alerts_due.select(&:on_time?).count * 100.0 / @alerts_due.count if @alerts_due.any?
       
-      week = week.begin..Time.now if week.end > Time.now
-      @alerts_closed_or_due = Houston::Alerts::Alert.closed_or_due_during(week)
-        .includes(:project, :checked_out_by)
+      @alerts_closed_not_due = Houston::Alerts::Alert.where(closed_at: week)
+        .where(alerts[:deadline].lt(week.begin))
+      
+      # week = week.begin..Time.now if week.end > Time.now
+      # @alerts_closed_or_due = Houston::Alerts::Alert.closed_or_due_during(week)
+      #   .includes(:project, :checked_out_by)
       
       
       # @alerts_opened_closed = ActiveRecord::Base.connection.select_all <<-SQL
