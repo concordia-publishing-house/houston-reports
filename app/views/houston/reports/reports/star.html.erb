@@ -50,7 +50,8 @@
         <tr>
           <th><%= avatar_for(user, size: 28) %></th>
           <% @date_range.each do |date|; next if date.wday == 0 or date.wday == 6 %>
-            <% if user.id == 60 && date < Date.new(2015, 6, 1) # Chase didn't work here yet %>
+            <% if (user.id == 60 && date < Date.new(2015, 6, 1)) || # Chase didn't work here yet
+                  (user.id == 61 && date < Date.new(2015, 6, 15)) # Matt didn't work here yet %>
               <td></td>
             <% else %>
               <% charged = measurements.find { |m| m.taken_on?(date) && m.name == "daily.hours.charged" }.try(:value).to_s.to_d
