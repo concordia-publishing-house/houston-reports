@@ -1,0 +1,90 @@
+<form method="GET" id="filters">
+  <%= label_tag :project_id do %>
+    Project
+    <%= select_tag :project_id,
+      options_from_collection_for_select(
+        ([Struct.new(:id, :name).new(-1, "All Projects")] +
+          @projects +
+         [Struct.new(:id, :name).new(nil, "Unknown")]),
+        :id,
+        :name,
+        params[:project_id]) %>
+  <% end %>
+
+  <%= label_tag :user_id do %>
+    Assigned to
+    <%= select_tag :user_id,
+      options_from_collection_for_select(
+        ([Struct.new(:id, :name).new(-1, "All Users")] +
+          @users +
+         [Struct.new(:id, :name).new(nil, "Unassigned")]),
+        :id,
+        :name,
+        params[:user_id]) %>
+  <% end %>
+</form>
+
+
+<div id="alerts_overview"></div>
+<div id="alerts_breakdowns"></div>
+
+
+<% content_for :javascripts do %>
+<script type="text/javascript">
+  $(function() {
+    var $filters = $('#filters');
+    $filters.on('change', 'select', function() {
+      $filters.submit();
+    });
+    
+    var alertsOpenedClosedByType = {};
+  <% @alerts_opened_closed_by_type.each do |type, rows| -%>
+    alertsOpenedClosedByType[<%= raw type.to_json %>] = [<%= raw rows.map { |row|
+      date = row["day"].to_date
+      <<-JavaScript
+      { date: new Date(#{date.year}, #{date.month - 1}, #{date.day}),
+        opened: #{row["alerts_opened"] || 0},
+        closed: #{row["alerts_closed"] || 0} }
+      JavaScript
+    }.join(",") %>];
+  <% end -%>
+    
+    var alertsOpenedClosed = [],
+        values = _.values(alertsOpenedClosedByType),
+        opened,
+        closed,
+        j,
+        jj = values.length;
+    for(var i=0, ii=values[0].length; i<ii; i++) {
+      opened = closed = 0;
+      for(j=0; j<jj; j++) {
+        opened = opened + values[j][i].opened;
+        closed = closed + values[j][i].closed;
+      }
+      alertsOpenedClosed.push({date: values[0][i].date, opened: opened, closed: closed});
+    }
+    
+    var overview = new AlertsOpenedClosedView({
+      el: $('#alerts_overview')[0],
+      data: alertsOpenedClosed,
+      axis: 'auto'
+    })
+    overview.render();
+    
+    var $graph,
+        $breakdowns = $('#alerts_breakdowns');
+    for(var type in alertsOpenedClosedByType) {
+      $graph = $breakdowns
+        .append('<dl><dt>' + type.toUpperCase() + 's</dt><dd class="alerts-graph" data-type="' + type + '"></dd></dl>')
+        .find('.alerts-graph[data-type="' + type + '"]')
+      new AlertsOpenedClosedView({
+        el: $graph[0],
+        data: alertsOpenedClosedByType[type],
+        domain: overview.y.domain(),
+        width: 640,
+        axis: 'auto'
+      }).render();
+    }
+  });
+</script>
+<% end %>

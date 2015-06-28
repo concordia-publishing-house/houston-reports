@@ -81,7 +81,8 @@
           opened: #{row["alerts_opened"] || 0},
           closed: #{row["alerts_closed"] || 0} }
         JavaScript
-      }.join(",") %>]
+      }.join(",") %>],
+      axis: 'week'
     });
     
     view.render();

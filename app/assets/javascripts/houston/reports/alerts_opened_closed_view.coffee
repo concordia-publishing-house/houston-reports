@@ -2,24 +2,42 @@ class @AlertsOpenedClosedView extends Backbone.View
 
   initialize: (options)->
     @data = options.data
-    @margin = {top: 40, right: 0, bottom: 24, left: 50}
-    @width = 960 - @margin.left - @margin.right
-    @height = 260 - @margin.top - @margin.bottom
+    @margin = {top: 10, right: 1, bottom: 24, left: 30}
+    width = options.width || 940
+    height = options.height || width * 0.25
+    @width = width - @margin.left - @margin.right
+    @height = height - @margin.top - @margin.bottom
 
-    max = Math.max d3.max(@data, (d)-> d.closed), d3.max(@data, (d)-> d.opened)
+    domain = options.domain
+    unless domain
+      max = Math.max d3.max(@data, (d)-> d.closed), d3.max(@data, (d)-> d.opened)
+      domain = [-max, max]
+
     @y = d3.scale.linear()
       .range [@height, 0]
-      .domain [-max, max]
+      .domain domain
 
     @x = d3.scale.ordinal()
       .rangeRoundBands([0, @width], .1)
       .domain @data.map (d)-> d.date
 
-    formatDate = d3.time.format("%A")
     @xAxis = d3.svg.axis()
-      .scale(@x)
       .orient("bottom")
-      .tickFormat (date)-> formatDate(date)
+
+    switch options.axis
+      when "week"
+        @xAxis
+          .scale(@x)
+          .tickFormat d3.time.format("%A")
+      when "auto"
+        [min, max] = d3.extent(@x.range())
+        max = max + @x.rangeBand()
+        xt = d3.time.scale()
+          .range [min, max]
+          .domain d3.extent @data, (d)-> d.date
+        @xAxis.scale(xt)
+      else
+        throw new Error "The value of 'options.axis' must be either 'week' or 'auto'"
 
     @yAxis = d3.svg.axis()
       .scale(@y)
