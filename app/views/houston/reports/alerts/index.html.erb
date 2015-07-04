@@ -22,10 +22,15 @@
         :name,
         params[:user_id]) %>
   <% end %>
+
+  <%= label_tag :show_percent do %>
+    <%= check_box_tag :show_percent %>
+    Percent
+  <% end %>
 </form>
 
 
-<div id="alerts_overview"></div>
+<div id="alerts_overview" class="alerts-graph"></div>
 <div id="alerts_breakdowns"></div>
 
 
@@ -37,54 +42,67 @@
       $filters.submit();
     });
     
-    var alertsOpenedClosedByType = {};
-  <% @alerts_opened_closed_by_type.each do |type, rows| -%>
-    alertsOpenedClosedByType[<%= raw type.to_json %>] = [<%= raw rows.map { |row|
-      date = row["day"].to_date
+    var alertsDueOnTimeByType = {};
+  <% @alerts_due_on_time_by_type.each do |type, rows| -%>
+    alertsDueOnTimeByType[<%= raw type.to_json %>] = [<%= raw rows.map { |row|
+      date = row["week"].to_date
+      due = row["due"].to_i
+      onTime = row["on_time"].to_i
       <<-JavaScript
       { date: new Date(#{date.year}, #{date.month - 1}, #{date.day}),
-        opened: #{row["alerts_opened"] || 0},
-        closed: #{row["alerts_closed"] || 0} }
+        due: #{due},
+        closedLate: #{due - onTime},
+        closedOnTime: #{onTime} }
       JavaScript
     }.join(",") %>];
   <% end -%>
     
-    var alertsOpenedClosed = [],
-        values = _.values(alertsOpenedClosedByType),
-        opened,
-        closed,
+    var alertsDueOnTime = [],
+        values = _.values(alertsDueOnTimeByType),
+        closedLate,
+        closedOnTime,
         j,
         jj = values.length;
     for(var i=0, ii=values[0].length; i<ii; i++) {
-      opened = closed = 0;
+      closedLate = closedOnTime = 0;
       for(j=0; j<jj; j++) {
-        opened = opened + values[j][i].opened;
-        closed = closed + values[j][i].closed;
+        closedLate = closedLate + values[j][i].closedLate;
+        closedOnTime = closedOnTime + values[j][i].closedOnTime;
       }
-      alertsOpenedClosed.push({date: values[0][i].date, opened: opened, closed: closed});
+      alertsDueOnTime.push({
+        date: values[0][i].date,
+        due: closedLate + closedOnTime,
+        closedLate: closedLate,
+        closedOnTime: closedOnTime});
     }
     
-    var overview = new AlertsOpenedClosedView({
+    var overview = new AlertsDueView({
       el: $('#alerts_overview')[0],
-      data: alertsOpenedClosed,
-      axis: 'auto'
-    })
-    overview.render();
+      data: alertsDueOnTime
+    }).render();
     
     var $graph,
+        graphs = [],
         $breakdowns = $('#alerts_breakdowns');
-    for(var type in alertsOpenedClosedByType) {
+    for(var type in alertsDueOnTimeByType) {
       $graph = $breakdowns
         .append('<dl><dt>' + type.toUpperCase() + 's</dt><dd class="alerts-graph" data-type="' + type + '"></dd></dl>')
         .find('.alerts-graph[data-type="' + type + '"]')
-      new AlertsOpenedClosedView({
+      graphs.push(new AlertsDueView({
         el: $graph[0],
-        data: alertsOpenedClosedByType[type],
-        domain: overview.y.domain(),
-        width: 640,
-        axis: 'auto'
-      }).render();
+        data: alertsDueOnTimeByType[type],
+        domain: overview.domain(),
+        width: 640
+      }).render());
     }
+    
+    $('#show_percent').click(function(e) {
+      var showPercent = $(e.target).prop('checked');
+      overview.toggleShowPercent(showPercent);
+      graphs.each(function(graph) {
+        graph.toggleShowPercent(showPercent);
+      });
+    });
   });
 </script>
 <% end %>

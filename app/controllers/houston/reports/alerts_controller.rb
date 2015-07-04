@@ -6,6 +6,9 @@ module Houston::Reports
     def index
       @date_range = Date.new(2015, 1, 1)..Date.today
 
+      # Align @date_range to weeks
+      @date_range = @date_range.begin.beginning_of_week..(6.days.after(@date_range.end.beginning_of_week))
+
       @project_id = params.fetch(:project_id, "-1") # -1 is all projects
       @user_id = params.fetch(:user_id, "-1") # -1 is everyone
 
@@ -20,15 +23,16 @@ module Houston::Reports
 
       types = alerts.pluck("DISTINCT type")
 
-      @alerts_opened_closed_by_type = types.each_with_object({}) do |type, hash|
+      @alerts_due_on_time_by_type = types.each_with_object({}) do |type, hash|
         _alerts = alerts.where(type: type)
+          .where("deadline BETWEEN weeks.start AND (weeks.start + '1 week'::interval)")
         hash[type] = ActiveRecord::Base.connection.select_all <<-SQL
           SELECT
-            "days"."day",
-            (#{_alerts.where("opened_at::date = days.day").to_sql}) "alerts_opened",
-            (#{_alerts.where("closed_at::date = days.day").to_sql}) "alerts_closed"
-          FROM generate_series('#{@date_range.begin}'::date, '#{@date_range.end}'::date, '1 day') AS days(day)
-          ORDER BY days.day ASC
+            ("weeks"."start" + '1 week'::interval) "week",
+            (#{_alerts.to_sql}) "due",
+            (#{_alerts.closed_on_time.to_sql}) "on_time"
+          FROM generate_series('#{@date_range.begin}'::date, '#{@date_range.end}'::date, '1 week') AS weeks(start)
+          ORDER BY weeks.start ASC
         SQL
       end
     end
