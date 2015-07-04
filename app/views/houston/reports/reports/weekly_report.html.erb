@@ -11,7 +11,7 @@
 <h2 class="light">Tasks <b class="count"><%= @sprint.tasks.count %></b></h2>
 <table class="weekly-report-list">
   <% @sprint.tasks.includes(:project).sort_by { |task| task.project ? task.project.slug : "" }.each do |task| %>
-    <tr class="report-sprint-task sprint-task task <%= task.completed_during?(@sprint) ? "success" : "failure" %>">
+    <tr class="report-sprint-task sprint-task task <%= sprint_task_css(@sprint, task) %>">
       <td class="task-project"><%= project_label(task.project) %></td>
       <td class="task-summary"><%= task.description %></td>
       <td class="task-worker"><%= avatar_for(@checked_out_by[task.id], size: 26) %></td>

@@ -1,5 +1,11 @@
 module Houston::Reports
   module ApplicationHelper
+
+    def sprint_task_css(sprint, task)
+      return "success" if task.completed_during?(sprint)
+      return "failure" if sprint.completed?
+      "todo"
+    end
     
     def arc(options={}) # ported from D3
       π = Math::PI
