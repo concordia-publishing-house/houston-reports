@@ -23,6 +23,7 @@ module Houston::Reports
     end
     
     def weekly_report
+      @title = "Weekly Report"
       date = Date.parse(params[:date]) rescue 1.day.ago
       
       @sprint = Sprint.find_by_date!(date)
@@ -94,6 +95,7 @@ module Houston::Reports
     end
     
     def star
+      @title = "Time-Entry Dashboard"
       date = Date.parse(params[:date]) rescue Date.today
       @report = WeeklyGoalReport.new(date)
 

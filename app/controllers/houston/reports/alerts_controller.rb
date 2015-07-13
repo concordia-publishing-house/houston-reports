@@ -4,6 +4,7 @@ module Houston::Reports
 
 
     def index
+      @title = "Alerts Report"
       @date_range = Date.new(2015, 1, 1)..Date.today
 
       # Align @date_range to weeks
