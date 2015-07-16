@@ -36,7 +36,7 @@
 <table class="weekly-report-list">
   <tbody>
     <% @alerts_due.sort_by { |alert| alert.project ? alert.project.slug : "" }.each do |alert| %>
-      <tr class="report-alert houston-alert <%= alert.on_time? ? "success" : "failure" %>" id="alert_<%= alert.id %>">
+      <tr class="report-alert houston-alert <%= alert.on_time? ? "success" : "failure" %>" id="alert_<%= alert.id %>" rel="alert" url="<%= alert.url %>">
         <td class="houston-alert-project"><%= project_label(alert.project) %></td>
         <td class="houston-alert-type"><%= icon_for_alert alert %></td>
         <td class="houston-alert-summary"><%= alert.summary %></td>
@@ -47,7 +47,7 @@
   </tbody>
   <tfoot>
     <% @alerts_closed_not_due.sort_by { |alert| alert.project ? alert.project.slug : "" }.each do |alert| %>
-      <tr class="report-alert houston-alert" id="alert_<%= alert.id %>">
+      <tr class="report-alert houston-alert" id="alert_<%= alert.id %>" rel="alert" url="<%= alert.url %>">
         <td class="houston-alert-project"><%= project_label(alert.project) %></td>
         <td class="houston-alert-type"><%= icon_for_alert alert %></td>
         <td class="houston-alert-summary"><%= alert.summary %></td>
@@ -86,6 +86,10 @@
     });
     
     view.render();
+    
+    $('[rel="alert"]').pseudoHover().click(function(e) {
+      window.location = $(e.target).closest('[rel="alert"]').attr('url');
+    });
   });
 </script>
 <% end %>

@@ -78,6 +78,11 @@ table.weekly-report-list {
   }
 }
 
+tr[rel="alert"]:hover td {
+  cursor: pointer;
+  background-color: rgba(128, 212, 255, 0.1);
+}
+
 h2.light {
   margin: 2em 0;
   display: block;
