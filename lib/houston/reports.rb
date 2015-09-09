@@ -4,10 +4,12 @@ require "houston/reports/configuration"
 module Houston
   module Reports
     extend self
-    
-    attr_reader :config
-    
+
+    def config(&block)
+      @configuration ||= Reports::Configuration.new
+      @configuration.instance_eval(&block) if block_given?
+      @configuration
+    end
+
   end
-  
-  Reports.instance_variable_set :@config, Reports::Configuration.new
 end
