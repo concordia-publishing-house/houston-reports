@@ -42,7 +42,7 @@ class @AlertsOpenedClosedView extends Backbone.View
     @yAxis = d3.svg.axis()
       .scale(@y)
       .orient("left")
-  
+
   render: ->
     svg = @$el.html('<svg class="alerts-opened-closed-graph"></svg>').children()[0]
     @chart = d3.select(svg)

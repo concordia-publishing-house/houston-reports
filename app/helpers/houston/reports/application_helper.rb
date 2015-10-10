@@ -6,7 +6,7 @@ module Houston::Reports
       return "failure" if sprint.completed?
       "todo"
     end
-    
+
     def arc(options={}) # ported from D3
       π = Math::PI
       τ = 2 * π
@@ -41,7 +41,7 @@ module Houston::Reports
         end
       end
     end
-    
+
     def arc_tick(options={})
       π = Math::PI
       τ = 2 * π
@@ -54,7 +54,7 @@ module Houston::Reports
       s0 = Math.sin(a0)
       "M#{r0 * c0},#{r0 * s0}L#{r1 * c0},#{r1 * s0}Z"
     end
-    
+
     def cool_avatar(user, size: 200)
       <<-HTML.html_safe
       <svg width="#{size}" height="#{size}" class="cool-avatar">
@@ -77,6 +77,6 @@ module Houston::Reports
       </svg>
       HTML
     end
-    
+
   end
 end

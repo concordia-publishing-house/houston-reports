@@ -1,10 +1,10 @@
 module Houston::Reports
   class ReportsController < ApplicationController
     layout "email"
-    
+
     helper Houston::Reports::ApplicationHelper
     helper Houston::Alerts::AlertHelper
-    
+
     helper_method :stylesheets
     class_attribute :stylesheets
     self.stylesheets = %w{
@@ -12,28 +12,28 @@ module Houston::Reports
       core/scores.scss
       application/emoji.scss
     }
-    
+
     self.stylesheets = stylesheets + %w{houston/reports/charts.scss}
-    
+
     def user_report
       date = Date.parse(params[:date]) rescue Date.today
       user = User.find_by_nickname! params[:nickname]
       authorize! :edit, user
       @report = WeeklyUserReport.new(user, date)
     end
-    
+
     def weekly_report
       @title = "Weekly Report"
       date = Date.parse(params[:date]) rescue 1.day.ago
-      
+
       @sprint = Sprint.find_by_date!(date)
       @checked_out_by ||= Hash[SprintTask
         .where(sprint_id: @sprint.id, task_id: @sprint.tasks.pluck(:id))
         .includes(:checked_out_by)
         .map { |task| [task.task_id, task.checked_out_by] }]
-      
+
       week = @sprint.to_range
-      
+
       # Alerts due during this week
       # except for those that aren't closed
       # and still have time (i.e. due after today)
@@ -49,15 +49,15 @@ module Houston::Reports
           alerts[:closed_at].not_eq(nil).or(
           alerts[:deadline].lteq(Time.now)))
       @alerts_rate = @alerts_due.select(&:on_time?).count * 100.0 / @alerts_due.count if @alerts_due.any?
-      
+
       @alerts_closed_not_due = Houston::Alerts::Alert.where(closed_at: week)
         .where(alerts[:deadline].lt(week.begin))
-      
+
       # week = week.begin..Time.now if week.end > Time.now
       # @alerts_closed_or_due = Houston::Alerts::Alert.closed_or_due_during(week)
       #   .includes(:project, :checked_out_by)
-      
-      
+
+
       # @alerts_opened_closed = ActiveRecord::Base.connection.select_all <<-SQL
       #   SELECT
       #     "days"."day",
@@ -90,10 +90,10 @@ module Houston::Reports
         FROM generate_series('#{2.days.before(@sprint.start_date)}'::date, '#{@sprint.end_date}'::date, '1 day') AS days(day)
         ORDER BY days.day ASC
       SQL
-      
+
       render layout: "houston/reports/minimal"
     end
-    
+
     def star
       @title = "Time-Entry Dashboard"
       date = Date.parse(params[:date]) rescue Date.today
@@ -106,13 +106,13 @@ module Houston::Reports
         .includes(:subject)
       render layout: request.xhr? ? false : "houston/reports/dashboard"
     end
-    
+
     def sprint
       @title = "Sprint"
       @sprint = Sprint.find_by_id(params[:id]) || Sprint.current || Sprint.create!
-      
+
       @report = WeeklyGoalReport.new(@sprint.start_date)
-      
+
       respond_to do |format|
         format.json do
           render json: {
@@ -125,7 +125,7 @@ module Houston::Reports
         end
       end
     end
-    
+
     def user_star_report
       user = User.find_by_nickname! params[:nickname]
       authorize! :edit, user
@@ -133,15 +133,15 @@ module Houston::Reports
         .for(user)
         .named("daily.hours.charged.*")
         .taken_since(Date.new(2015, 1, 1))
-      
+
       prefix = "daily.hours.charged."
       measurements_by_component = measurements.group_by { |measurement| measurement.name[prefix.length..-1] }
       measurements_by_component.delete "percent"
       dates = measurements.map(&:taken_on).uniq.reverse
-      
+
       package = Xlsx::Package.new
       worksheet = package.workbook.worksheets[0]
-      
+
       heading = {
         alignment: Xlsx::Elements::Alignment.new("left", "center") }
       general = {
@@ -151,16 +151,16 @@ module Houston::Reports
         alignment: Xlsx::Elements::Alignment.new("right", "center") }
       number = {
         alignment: Xlsx::Elements::Alignment.new("right", "center") }
-      
+
       worksheet.add_row(
         number: 2,
         cells: dates.each_with_index.map { |date, j|
           { column: j + 3, value: date, style: timestamp } } + [
           { column: dates.length + 3, value: "total", style: heading }
         ])
-      
+
       last_column = column_letter(dates.length + 2)
-      
+
       measurements_by_component.each_with_index do |(component, measurements), i|
         worksheet.add_row(
           number: i + 3,
@@ -174,7 +174,7 @@ module Houston::Reports
             { column: dates.length + 4, value: component, style: heading }
           ])
       end
-      
+
       worksheet.add_row(
         number: measurements_by_component.length + 3,
         cells: [
@@ -182,18 +182,18 @@ module Houston::Reports
         ] + dates.each_with_index.map { |date, j|
           column = column_letter(j + 3)
           { column: j + 3, formula: "SUM(#{column}3:#{column}#{measurements_by_component.length + 2})", style: number } })
-      
-      
+
+
       worksheet.column_widths({1 => 3.83203125})
-      
+
       send_data package.to_stream.string,
         type: :xlsx,
         filename: "Star Time for #{user.name}.xlsx",
         disposition: "attachment"
     end
-    
+
   private
-    
+
     def column_letter(number)
       bytes = []
       remaining = number
@@ -203,6 +203,6 @@ module Houston::Reports
       end
       bytes.pack "c*"
     end
-    
+
   end
 end
