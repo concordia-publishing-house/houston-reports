@@ -5,15 +5,21 @@ Email Reports from Houston
 
 ## Installation
 
-In your [Houston](https://github.com/houstonmc/houston) `config/config.rb` file, add:
+In your `Gemfile`, add:
 
-    use :reports
+    gem "houston-reports"
+
+And in `config/main.rb`, add:
+
+```ruby
+use :reports do
+  # TODO: specify configuration options for Houston::Reports here
+end
+```
 
 And then execute:
 
     $ bundle
-
-Run Houston and you can navigate to your reports at the path '/reports'
 
 
 ## Contributing

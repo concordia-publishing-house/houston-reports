@@ -1,15 +1,15 @@
+require "houston/reports/railtie"
+
 module Houston
   module Reports
     class Engine < ::Rails::Engine
       isolate_namespace Houston::Reports
 
-      # Enabling assets precompiling under rails 3.1
-      if Rails.version >= '3.1'
-        initializer :assets do |config|
-          Rails.application.config.assets.precompile += %w(
-            houston/reports/application.js
-            houston/reports/application.css )
-        end
+      # Precompile this modules assets
+      initializer :assets do |config|
+        Rails.application.config.assets.precompile += %w(
+          houston/reports/application.js
+          houston/reports/application.css )
       end
 
       # Include the Engine's migrations with the Application

@@ -4,17 +4,21 @@ $:.push File.expand_path("../lib", __FILE__)
 require "houston/reports/version"
 
 # Describe your gem and declare its dependencies:
-Gem::Specification.new do |s|
-  s.name        = "houston-reports"
-  s.version     = Houston::Reports::VERSION
-  s.authors     = ["Bob Lail"]
-  s.email       = ["bob.lail@cph.org"]
-  s.homepage    = "https://github.com/concordia-publishing-house/houston-reports"
-  s.summary     = "Email Reports from Houston"
-  s.description = "Email Reports from Houston"
+Gem::Specification.new do |spec|
+  spec.name        = "houston-reports"
+  spec.version     = Houston::Reports::VERSION
+  spec.authors     = ["Bob Lail"]
+  spec.email       = ["bob.lail@cph.org"]
 
-  s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
-  s.test_files = Dir["test/**/*"]
+  spec.summary     = "Email Reports from Houston"
+  spec.description = "Email Reports from Houston"
+  spec.homepage    = "https://github.com/concordia-publishing-house/houston-reports"
 
-  s.add_dependency "rails"
+  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.require_paths = ["lib"]
+  spec.test_files = Dir["test/**/*"]
+
+  spec.add_development_dependency "bundler", "~> 1.10.6"
+  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "houston-core", ">= 0.5.3"
 end
