@@ -14,9 +14,9 @@ module Houston::Reports
       @user_id = params.fetch(:user_id, "-1") # -1 is everyone
 
       @projects = Project.where(Project.arel_table[:id].in(
-        Houston::Alerts::Alert.select(:project_id).arel))
+        Houston::Alerts::Alert.arel_table.project(:project_id)))
       @users = User.where(User.arel_table[:id].in(
-        Houston::Alerts::Alert.select(:checked_out_by_id).arel))
+        Houston::Alerts::Alert.arel_table.project(:checked_out_by_id)))
 
       alerts = Houston::Alerts::Alert.reorder(nil).select("COUNT(*)")
       alerts = alerts.where(project_id: @project_id) unless @project_id == "-1"
