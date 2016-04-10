@@ -126,69 +126,121 @@ module Houston::Reports
       end
     end
 
-    def user_star_report
-      user = User.find_by_nickname! params[:nickname]
-      authorize! :edit, user
-      measurements = Measurement \
-        .for(user)
-        .named("daily.hours.charged.*")
-        .taken_since(Date.new(2015, 1, 1))
 
-      prefix = "daily.hours.charged."
-      measurements_by_component = measurements.group_by { |measurement| measurement.name[prefix.length..-1] }
+
+    def star_export_by_component
+      authorize! :admin, User
+      since = params.fetch(:since, "2015-01-01").to_date
+      subject = User
+      subject = User.find_by_nickname! params[:nickname] if params[:nickname]
+      bin = params.fetch(:bin, "daily")
+
+      measurements = Measurement
+        .for(subject)
+        .named("#{bin}.hours.charged.*")
+        .taken_since(since)
+
+      prefix = "#{bin}.hours.charged."
+      measurements_by_component = measurements.group_by do |measurement|
+        component = measurement.name[prefix.length..-1]
+        component = "itsm/exception/cve" if %w{itsm exception cve}.member? component
+        component
+      end
       measurements_by_component.delete "percent"
-      dates = measurements.map(&:taken_on).uniq.reverse
+      dates = measurements.map(&:taken_on).uniq.reverse.reject { |date| date.wday == 0 || date.wday == 6 }
 
-      package = Xlsx::Package.new
+      package = OpenXml::Xlsx::Package.new
       worksheet = package.workbook.worksheets[0]
-
-      heading = {
-        alignment: Xlsx::Elements::Alignment.new("left", "center") }
-      general = {
-        alignment: Xlsx::Elements::Alignment.new("left", "center") }
-      timestamp = {
-        format: Xlsx::Elements::NumberFormat::DATE,
-        alignment: Xlsx::Elements::Alignment.new("right", "center") }
-      number = {
-        alignment: Xlsx::Elements::Alignment.new("right", "center") }
 
       worksheet.add_row(
         number: 2,
         cells: dates.each_with_index.map { |date, j|
-          { column: j + 3, value: date, style: timestamp } } + [
-          { column: dates.length + 3, value: "total", style: heading }
+          { column: j + 3, value: date, style: TIMESTAMP } } + [
+          { column: dates.length + 3, value: "total", style: HEADING_R },
+          { column: dates.length + 4, value: "percent", style: HEADING_R }
         ])
 
       last_column = column_letter(dates.length + 2)
+      total_column = column_letter(dates.length + 3)
 
       measurements_by_component.each_with_index do |(component, measurements), i|
         worksheet.add_row(
           number: i + 3,
           cells: [
-            { column: 2, value: component, style: heading }
+            { column: 2, value: component, style: HEADING }
           ] + dates.each_with_index.map { |date, j|
             measurement = measurements.find { |measurement| measurement.taken_on? date }
             value = measurement && measurement.value.to_d
-            { column: j + 3, value: value, style: number } } + [
-            { column: dates.length + 3, formula: "SUM(C#{i + 3}:#{last_column}#{i + 3})", style: number },
-            { column: dates.length + 4, value: component, style: heading }
+            { column: j + 3, value: value, style: NUMBER }
+          } + [
+            { column: dates.length + 3, formula: "SUM(C#{i + 3}:#{last_column}#{i + 3})", style: NUMBER },
+            { column: dates.length + 4, formula: "=#{total_column}#{i + 3}/#{total_column}#{measurements_by_component.length + 3}", style: PERCENT },
+            { column: dates.length + 5, formula: "=B#{i + 3}", style: HEADING }
           ])
       end
 
       worksheet.add_row(
         number: measurements_by_component.length + 3,
         cells: [
-          { column: 2, value: "total", style: heading }
+          { column: 2, value: "total", style: HEADING }
         ] + dates.each_with_index.map { |date, j|
           column = column_letter(j + 3)
-          { column: j + 3, formula: "SUM(#{column}3:#{column}#{measurements_by_component.length + 2})", style: number } })
-
+          { column: j + 3, formula: "SUM(#{column}3:#{column}#{measurements_by_component.length + 2})", style: NUMBER }
+        } + [
+          { column: dates.length + 3, formula: "SUM(#{total_column}3:#{total_column}#{measurements_by_component.length + 2})", style: NUMBER }
+        ])
 
       worksheet.column_widths({1 => 3.83203125})
 
       send_data package.to_stream.string,
         type: :xlsx,
-        filename: "Star Time for #{user.name}.xlsx",
+        filename: "Star Time for #{subject.name}.xlsx",
+        disposition: "attachment"
+    end
+
+
+
+    def star_export_chargeable
+      authorize! :admin, User
+      since = params.fetch(:since, "2015-01-01").to_date
+      subject = User
+      subject = User.find_by_nickname! params[:nickname] if params[:nickname]
+      bin = params.fetch(:bin, "daily")
+
+      measurements = Measurement
+        .for(subject)
+        .named("#{bin}.hours.charged.percent")
+        .taken_since(since)
+        .preload(:subject)
+      dates = measurements.map(&:taken_on).uniq.reverse.reject { |date| date.wday == 0 || date.wday == 6 }
+
+      package = OpenXml::Xlsx::Package.new
+      worksheet = package.workbook.worksheets[0]
+
+      worksheet.add_row(
+        number: 2,
+        cells: dates.each_with_index.map { |date, j|
+          { column: j + 3, value: date, style: TIMESTAMP } })
+
+      last_column = column_letter(dates.length + 2)
+
+      measurements_by_user = measurements.group_by(&:subject)
+      measurements_by_user.each_with_index do |(user, measurements), i|
+        worksheet.add_row(
+          number: i + 3,
+          cells: [
+            { column: 2, value: user.name, style: HEADING }
+          ] + dates.each_with_index.map { |date, j|
+            measurement = measurements.find { |measurement| measurement.taken_on? date }
+            value = measurement && measurement.value.to_d
+            { column: j + 3, value: value, style: PERCENT } })
+      end
+
+      worksheet.column_widths({1 => 3.83203125})
+
+      send_data package.to_stream.string,
+        type: :xlsx,
+        filename: "Star Time since #{since}.xlsx",
         disposition: "attachment"
     end
 
@@ -203,6 +255,22 @@ module Houston::Reports
       end
       bytes.pack "c*"
     end
+
+
+    HEADING = {
+      alignment: OpenXml::Xlsx::Elements::Alignment.new("left", "center") }
+    HEADING_R = {
+      alignment: OpenXml::Xlsx::Elements::Alignment.new("right", "center") }
+    GENERAL = {
+      alignment: OpenXml::Xlsx::Elements::Alignment.new("left", "center") }
+    TIMESTAMP = {
+      format: OpenXml::Xlsx::Elements::NumberFormat::DATE,
+      alignment: OpenXml::Xlsx::Elements::Alignment.new("right", "center") }
+    PERCENT = {
+      format: OpenXml::Xlsx::Elements::NumberFormat::INTEGER_PERCENT,
+      alignment: OpenXml::Xlsx::Elements::Alignment.new("right", "center") }
+    NUMBER = {
+      alignment: OpenXml::Xlsx::Elements::Alignment.new("right", "center") }
 
   end
 end

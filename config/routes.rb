@@ -14,11 +14,13 @@ Houston::Reports::Engine.routes.draw do
     # Scorecards
     get "weekly/by_user/:nickname", to: "reports#user_report"
 
-    # Special Star report download (to remove)
-    get "weekly/by_user/:nickname/star.xlsx", to: "reports#user_star_report"
-
     # Sprint and Alerts details for each week
     get "weekly", to: "reports#weekly_report", as: :weekly_report
+
+    constraints bin: /weekly|daily/ do
+      get ":bin/star/by_component.xlsx", to: "reports#star_export_by_component"
+      get ":bin/star/chargeable.xlsx", to: "reports#star_export_chargeable"
+    end
   end
 
 end
