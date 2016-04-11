@@ -169,8 +169,10 @@ module Houston::Reports
           cells: [
             { column: 2, value: component, style: HEADING }
           ] + dates.each_with_index.map { |date, j|
-            measurement = measurements.find { |measurement| measurement.taken_on? date }
-            value = measurement && measurement.value.to_d
+            value = measurements
+              .find_all { |measurement| measurement.taken_on? date }
+              .map { |measurement| measurement.value.to_d }
+              .sum
             { column: j + 3, value: value, style: NUMBER }
           } + [
             { column: dates.length + 3, formula: "SUM(C#{i + 3}:#{last_column}#{i + 3})", style: NUMBER },
@@ -231,8 +233,10 @@ module Houston::Reports
           cells: [
             { column: 2, value: user.name, style: HEADING }
           ] + dates.each_with_index.map { |date, j|
-            measurement = measurements.find { |measurement| measurement.taken_on? date }
-            value = measurement && measurement.value.to_d
+            value = measurements
+              .find_all { |measurement| measurement.taken_on? date }
+              .map { |measurement| measurement.value.to_d }
+              .sum
             { column: j + 3, value: value, style: PERCENT } })
       end
 
