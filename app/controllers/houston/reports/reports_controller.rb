@@ -15,6 +15,11 @@ module Houston::Reports
 
     self.stylesheets = stylesheets + %w{houston/reports/charts.scss}
 
+    def default
+      @title = "Reports"
+      render layout: "report"
+    end
+
     def user_report
       date = Date.parse(params[:date]) rescue Date.today
       user = User.find_by_nickname! params[:nickname]
