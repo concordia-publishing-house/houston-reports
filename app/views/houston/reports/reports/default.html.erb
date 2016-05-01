@@ -33,42 +33,84 @@
       });
     }
 
-    function reduceMeasurements(coalesceByTimestamp, computeValues) {
-      return function(measurements) {
-        return mapValues(
-          byTimestamp(measurements, coalesceByTimestamp),
-          computeValues);
-      };
-    }
-
-    function reducePercentOfTimeWorked() {
-      return reduceMeasurements(
-        function(measurement, hours) {
-          hours = hours || { worked: 0, charged: 0 };
-          if(measurement.name == 'daily.hours.worked') {
-            hours.worked += +measurement.value;
-          } else {
-            hours.charged += +measurement.value;
-          }
-          return hours;
-        },
-        function(timestamp, hours) {
-          date = new Date(timestamp)
-          if(date.getDay() > 0 && date.getDay() < 6 && hours.worked > 0) {
-            return (hours.charged * 100) / hours.worked;
-          } else {
-            return null;
-          }
+    function reducePercent(measurements, defaultValue, mapper) {
+      return mapValues(
+        byTimestamp(measurements, function(measurement, accumulator) {
+          accumulator = accumulator || { total: 0, variable: 0 };
+          mapper(measurement, accumulator);
+          return accumulator;
+        }),
+        function(timestamp, accumulator) {
+          return accumulator.total > 0 ? ((accumulator.variable * 100) / accumulator.total) : defaultValue;
         }
       );
     }
 
-    function toPercent(measurements) {
-      return _.map(measurements, function(measurement) {
-        measurement.value = 100.0 * +measurement.value;
-        return measurement;
+    function meanPercent(measurements, defaultValue, mapper) {
+      var accumulator = { total: 0, variable: 0 };
+      _.each(measurements, function(measurement) {
+        mapper(measurement, accumulator);
       });
+      return accumulator.total > 0 ? ((accumulator.variable * 100) / accumulator.total) : defaultValue;
     }
+
+
+
+    function ofTimeWorked(measurement, accumulator) {
+      var date = new Date(measurement.timestamp);
+      if(date.getDay() > 0 && date.getDay() < 6) {
+        if(measurement.name == 'daily.hours.worked') {
+          accumulator.total += +measurement.value;
+        } else {
+          accumulator.variable += +measurement.value;
+        }
+      }
+    }
+
+    function reducePercentOfTimeWorked(measurements) {
+      return reducePercent(measurements, null, ofTimeWorked);
+    }
+
+    function meanPercentOfTimeWorked(measurements) {
+      return meanPercent(measurements, null, ofTimeWorked);
+    }
+
+
+
+    function ofAlertsCompletedOnTime(measurement, accumulator) {
+      if(measurement.name == 'daily.alerts.due') {
+        accumulator.total += +measurement.value;
+      } else {
+        accumulator.variable += +measurement.value;
+      }
+    }
+
+    function reducePercentOfAlertsCompletedOnTime(measurements) {
+      return reducePercent(measurements, 100, ofAlertsCompletedOnTime);
+    }
+
+    function meanPercentOfAlertsCompletedOnTime(measurements) {
+      return meanPercent(measurements, null, ofAlertsCompletedOnTime);
+    }
+
+
+
+    function ofRequests5xx(measurement, accumulator) {
+      if(measurement.name == 'daily.requests') {
+        accumulator.total += +measurement.value;
+      } else {
+        accumulator.variable += +measurement.value;
+      }
+    }
+
+    function reducePercentOfRequests5xx(measurements) {
+      return reducePercent(measurements, null, ofRequests5xx);
+    }
+
+    function meanPercentOfRequests5xx(measurements) {
+      return meanPercent(measurements, null, ofRequests5xx);
+    }
+
 
 
     var sections = [
@@ -85,14 +127,16 @@
               measurements: {
                 name: ['daily.hours.worked', 'daily.hours.charged.{cve,exception,itsm}'],
                 subject_type: 'User' },
-              map: reducePercentOfTimeWorked()
+              map: reducePercentOfTimeWorked,
+              mean: meanPercentOfTimeWorked
             }, {
               name: 'Alerts Closed On-Time',
               units: '%',
               min: 0,
               max: 100,
-              measurements: { name: 'daily.alerts.due.completed-on-time.percent' },
-              map: toPercent
+              measurements: { name: ['daily.alerts.due', 'daily.alerts.due.completed-on-time'] },
+              map: reducePercentOfAlertsCompletedOnTime,
+              mean: meanPercentOfAlertsCompletedOnTime
             } ]
         },
 
@@ -105,7 +149,8 @@
             measurements: {
               name: ['daily.hours.worked', 'daily.hours.charged'],
               subject_type: 'User' },
-            map: reducePercentOfTimeWorked()
+            map: reducePercentOfTimeWorked,
+            mean: meanPercentOfTimeWorked
           }, {
             name: 'Time Spent on Development',
             units: '%',
@@ -113,7 +158,8 @@
             measurements: {
               subject_type: 'User',
               name: ['daily.hours.worked', 'daily.hours.charged.{development,ix-design}'] },
-            map: reducePercentOfTimeWorked()
+            map: reducePercentOfTimeWorked,
+            mean: meanPercentOfTimeWorked
           }, {
             name: 'Time Spent on Maintenance',
             units: '%',
@@ -121,7 +167,8 @@
             measurements: {
               subject_type: 'User',
               name: ['daily.hours.worked', 'daily.hours.charged.{chore,cve,exception,itsm,support}'] },
-            map: reducePercentOfTimeWorked()
+            map: reducePercentOfTimeWorked,
+            mean: meanPercentOfTimeWorked
           } ]
         }
       ];
@@ -154,8 +201,9 @@
             min: 0,
             measurements: {
               project: project,
-              name: 'daily.requests.5xx.percent' },
-            map: toPercent
+              name: ['daily.requests', 'daily.requests.5*'] },
+            map: reducePercentOfRequests5xx,
+            mean: meanPercentOfRequests5xx
           } ]
         });
     });

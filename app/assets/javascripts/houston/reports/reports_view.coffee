@@ -75,11 +75,11 @@ class @ReportsView extends Backbone.View
       @renderReport($(selector), report, data)
     @requests.push jqXHR
 
-  renderReport: ($report, report, data) ->
-    if report.map
-      data = report.map(data)
+  renderReport: ($report, report, measurements) ->
+    data = if report.map then report.map(measurements) else measurements
+    mean = if report.mean then report.mean(measurements) else d3.mean(data, (measurement) ->
+      if _.isNull(measurement.value) then null else +measurement.value)
 
-    mean = d3.mean(data, (measurement) -> if _.isNull(measurement.value) then null else +measurement.value)
     tickFormat = switch report.units
       when "%" then (n) -> d3.format(report.format ? ".1f")(n) + "%"
       when "ms" then (n) -> d3.format(report.format ? "f")(n) + "ms"
