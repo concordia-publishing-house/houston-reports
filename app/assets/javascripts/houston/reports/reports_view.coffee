@@ -1,7 +1,6 @@
 class @ReportsView extends Backbone.View
 
   initialize: (options) ->
-    console.log('options', options)
     @sections = options.sections
     @end = new Date()
     @start = 1.month().ago()

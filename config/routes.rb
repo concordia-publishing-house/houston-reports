@@ -3,6 +3,7 @@ Houston::Reports::Engine.routes.draw do
   scope "reports" do
     # Shows various stats about process and product
     get "", to: "reports#default"
+    get "star", to: "reports#star2"
 
     # Shows who has entered their Star and Empower time over the last two weeks
     get "star/dashboard", to: "reports#star"

@@ -20,6 +20,12 @@ module Houston::Reports
       render layout: "report"
     end
 
+    def star2
+      authorize! :read, :star_report
+      @title = "Star"
+      render layout: "report"
+    end
+
     def user_report
       date = Date.parse(params[:date]) rescue Date.today
       user = User.find_by_nickname! params[:nickname]
