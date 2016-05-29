@@ -17,13 +17,13 @@ module Houston::Reports
 
     def default
       @title = "Reports"
-      render layout: "report"
+      render layout: "houston/reports/naked"
     end
 
     def star2
       authorize! :read, :star_report
       @title = "Star"
-      render layout: "report"
+      render layout: "houston/reports/naked"
     end
 
     def user_report

@@ -1,9 +1,9 @@
-.container.reports-container {
+.container {
   margin: 2em auto;
   max-width: 640px;
-
-  .nav-tabs > li:not(.active) > a { color: #999; }
 }
+
+#reports_timeframes > li:not(.active) > a { color: #999; }
 
 .report-section {
   position: relative;
