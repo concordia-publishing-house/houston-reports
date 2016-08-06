@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
 
   spec.summary     = "Email Reports from Houston"
   spec.description = "Email Reports from Houston"
-  spec.homepage    = "https://github.com/concordia-publishing-house/houston-reports"
+  spec.homepage    = "https://github.com/cph/houston-reports"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.require_paths = ["lib"]
