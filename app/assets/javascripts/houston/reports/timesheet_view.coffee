@@ -18,7 +18,9 @@ class @TimesheetView extends Backbone.View
       "project-maintenance",
 
       "planning",
-      "ux-research"
+      "ux-research",
+
+      "pto"
     ]
     @colors = [
       'rgba(220, 81, 27, 0.75)',
@@ -33,6 +35,8 @@ class @TimesheetView extends Backbone.View
 
       'rgba(28, 28, 28, 0.5)',
       'rgba(140, 135, 134, 0.5)',
+
+      'rgba(98, 183, 0, 0.1)',
     ]
 
     view = @
@@ -50,7 +54,7 @@ class @TimesheetView extends Backbone.View
       start: App.serverDateFormat(@start)
       end: App.serverDateFormat(@end)
       subject_type: "User"
-      name: ["daily.hours.worked", "daily.hours.charged.{#{@components.join(",")}}"]
+      name: ["daily.hours.{off,worked}", "daily.hours.charged.{#{@components.join(",")}}"]
     jqXHR = $.getJSON "/api/v1/measurements", params, (measurements, response, jqXHR) =>
       i = @requests.indexOf(jqXHR)
       @requests.splice(i, 1)
@@ -102,6 +106,9 @@ class @TimesheetView extends Backbone.View
 
       if name == "daily.hours.worked"
         ceilsByDate[App.serverDateFormat(date)][1] += +value
+      else if name == "daily.hours.off"
+        i = @components.indexOf("pto")
+        stack[i + 1] += +value unless i < 0
       else
         i = @components.indexOf(name.substr(20))
         stack[i + 1] += +value unless i < 0
