@@ -6,6 +6,8 @@ class @StackedBarGraph
     @_height = 260
     @_dateFormat = "%-m/%-d"
     @_data = []
+    @_bands = []
+    @_bandColor = 'rgb(225, 225, 225)'
     @_legend = true
     @_labels = []
     @_colors = ['rgb(31, 119, 180)', 'rgb(174, 199, 232)', 'rgb(255, 127, 14)', 'rgb(255, 187, 120)', 'rgb(44, 160, 44)']
@@ -19,6 +21,8 @@ class @StackedBarGraph
   domain: (@_domain)-> @
   data: (@_data)-> @
   ceils: (@_ceils)-> @
+  bands: (@_bands)-> @
+  bandColor: (@_bandColor)-> @
   labels: (@_labels)-> @
   colors: (@_colors)-> @
   range: (@_range)-> @
@@ -122,6 +126,18 @@ class @StackedBarGraph
         .attr('x2', (d)-> x(d[0]) + x.rangeBand())
         .attr('y1', (d)-> y(d[1]))
         .attr('y2', (d)-> y(d[1]))
+
+    bands = svg.selectAll('.band')
+      .data(_.select(@_bands, (d) -> x(d[0])))
+
+    bands.enter()
+      .append('rect')
+        .attr('class', 'band')
+        .attr('transform', (d)-> "translate(#{x(d[0])},0)")
+        .attr('width', x.rangeBand())
+        .attr('y', (d)-> y(d[2]))
+        .attr('height', (d)-> y(d[1]) - y(d[2]))
+        .style('fill', @_bandColor)
 
     if @_legend
       $legend = $('<dl class="legend"></dl>').appendTo(@_selector)

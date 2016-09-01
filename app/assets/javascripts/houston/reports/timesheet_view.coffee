@@ -18,9 +18,7 @@ class @TimesheetView extends Backbone.View
       "project-maintenance",
 
       "planning",
-      "ux-research",
-
-      "pto"
+      "ux-research"
     ]
     @colors = [
       'rgba(220, 81, 27, 0.75)',
@@ -34,9 +32,7 @@ class @TimesheetView extends Backbone.View
       'rgba(26, 123, 105, 0.5)',
 
       'rgba(28, 28, 28, 0.5)',
-      'rgba(140, 135, 134, 0.5)',
-
-      'rgba(98, 183, 0, 0.1)',
+      'rgba(140, 135, 134, 0.5)'
     ]
 
     view = @
@@ -89,6 +85,7 @@ class @TimesheetView extends Backbone.View
   drawGraph: (timesheet) ->
     stacksByDate = {}
     ceilsByDate = {}
+    ptoByDate = {}
     emptyStack = Array(@components.length).fill(0)
     domain = []
     date = @start
@@ -97,6 +94,7 @@ class @TimesheetView extends Backbone.View
         domain.push date
         stacksByDate[App.serverDateFormat(date)] = [date].concat(_.clone(emptyStack))
         ceilsByDate[App.serverDateFormat(date)] = [date, 0]
+        ptoByDate[App.serverDateFormat(date)] = [date, 0, 0]
       date = 1.day().after(date)
 
     for {timestamp, name, value} in timesheet.measurements
@@ -106,15 +104,17 @@ class @TimesheetView extends Backbone.View
 
       if name == "daily.hours.worked"
         ceilsByDate[App.serverDateFormat(date)][1] += +value
+        ptoByDate[App.serverDateFormat(date)][1] += +value
+        ptoByDate[App.serverDateFormat(date)][2] += +value
       else if name == "daily.hours.off"
-        i = @components.indexOf("pto")
-        stack[i + 1] += +value unless i < 0
+        ptoByDate[App.serverDateFormat(date)][2] += +value
       else
         i = @components.indexOf(name.substr(20))
         stack[i + 1] += +value unless i < 0
 
     values = _.values(stacksByDate)
     ceils = _.values(ceilsByDate)
+    bands = _.reject _.values(ptoByDate), ([date, a, b]) -> a == b
 
     @sprintGraph = new StackedBarGraph()
       .selector("#timesheet_#{timesheet.subject.id} > .timesheet-graph")
@@ -125,5 +125,9 @@ class @TimesheetView extends Backbone.View
       .domain(domain)
       .data(values)
       .ceils(ceils)
+      .bands(bands)
+      .bandColor('rgba(98, 183, 0, 0.1)')
+      .bandColor('rgba(127, 158, 90, 0.0980392)')
+      .bandColor('rgba(181, 208, 148, 0.14902)')
       .range([0, 10])
       .render()
