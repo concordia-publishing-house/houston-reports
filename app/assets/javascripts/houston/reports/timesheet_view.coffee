@@ -73,7 +73,7 @@ class @TimesheetView extends Backbone.View
   render: ->
     # for each subject, render a new stacked bar graph
     @$el.empty()
-    for timesheet in @timesheets
+    for timesheet in @timesheets when @users[timesheet.subject.id]
       @$el.append """
 <li class="timesheet" id="timesheet_#{timesheet.subject.id}">
   <div class="timesheet-employee">#{@users[timesheet.subject.id]}</div>
